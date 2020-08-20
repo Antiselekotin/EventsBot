@@ -23,7 +23,7 @@ class CreateParticipantsTable extends Migration
             $table->string('country');
             $table->string('city');
 
-            $table->string('info');
+            $table->text('info');
             $table->string('time');
 
             $table->timestamps();
