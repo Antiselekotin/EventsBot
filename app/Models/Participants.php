@@ -7,7 +7,9 @@ use App\Models\Links;
 
 class Participants extends Model
 {
-    protected $fillable = ['name', 'artist', 'day', 'country', 'city', 'info', 'time'];
+    protected $fillable = ['name', 'artist', 'day', 'country',
+        'city', 'info', 'time', 'music', 'performance', 'documentary',
+        'visual'];
 
     public function links()
     {

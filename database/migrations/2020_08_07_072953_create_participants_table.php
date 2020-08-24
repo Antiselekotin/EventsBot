@@ -20,6 +20,11 @@ class CreateParticipantsTable extends Migration
             $table->boolean('artist');
             $table->boolean('day');
 
+            $table->boolean('music');
+            $table->boolean('performance');
+            $table->boolean('documentary');
+            $table->boolean('visual');
+
             $table->string('country');
             $table->string('city');
 

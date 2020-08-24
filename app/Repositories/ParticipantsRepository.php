@@ -23,9 +23,9 @@ class ParticipantsRepository extends CoreRepository
      */
     public function getEdit($id)
     {
-        $column = ['id', 'name', 'artist', 'day', 'country', 'city', 'info', 'time'];
+
         return $this->startCondition()
-            ->select($column)
+            ->select('*')
             ->where('id', '=', $id)
             ->with(['links:id,participant_id,button_name,link'])
             ->first();

@@ -50,12 +50,17 @@ class ParticipantsController extends Controller
             foreach ($links as $link)
             {
                 $data = ['button_name' => $link[1], 'link' => $link[0],];
-                $result->links()->create($data);
+                $result->links()
+                    ->create($data);
             }
-            return redirect()->route('main.participants.create')->with(['success' => 'Запись успешно создана']);
+            return redirect()
+                ->route('main.participants.create')
+                ->with(['success' => 'Запись успешно создана']);
         } else
         {
-            return back()->withInput()->withErrors(['msg' => 'Ошибка создания']);
+            return back()
+                ->withInput()
+                ->withErrors(['msg' => 'Ошибка создания']);
         }
     }
 
@@ -75,40 +80,43 @@ class ParticipantsController extends Controller
      * @return \Illuminate\Http\RedirectResponse
      */
     public function update(Request $request, $id,
-                           ParticipantsRepository $participantsRepository,
-                           LinksRepository $linksRepository)
+        ParticipantsRepository $participantsRepository,
+        LinksRepository $linksRepository)
     {
         $data = $request->all();
         $item = $participantsRepository->getEdit($id);
 
         $ids = collect($data['ids'] ?? []);
-        $links = $this->getForLinks($data);
-        $linksCount = $item->links()->count();
+        $links = collect($this->getForLinks($data))->transform(function ($item)
+        {
+            return ['button_name' => $item[1], 'link' => $item[0]];
+        });
         $result = $item->update($data);
+
 
         if ($result)
         {
-            $ids->transform(function ($item, $index) use (&$links, $linksRepository, $linksCount)
+            $ids->each(function ($id, $index) use ($linksRepository, $links)
             {
-                $dbModel = $linksRepository->getEdit($item);
-                $this->setDefaultValueForInputs($links, $linksCount);
-                $updateData = ['button_name' => $links[$index][1], 'link' => $links[$index][0]];
-                $dbModel->update($updateData);
+                $participantWithLinks = $linksRepository->getEdit($id);
+                $participantWithLinks->update($links[$index]);
                 $links[$index] = null;
-                return null;
             });
-            $linksAfterUpdate = collect($links)->filter(function ($item) {
-                return !($item === null);
-            });
-            foreach ($linksAfterUpdate as $link)
+
+            $links->each(function ($link) use ($item)
             {
-                $data = ['button_name' => $link[1], 'link' => $link[0]];
-                $item->links()->create($data);
-            }
-            return redirect()->route('main.participants.edit', $item->id)->with(['success' => 'Запись успешно обновлена']);
+                if ($link !== null) {
+                    $item->links()->create($link);
+                }
+            });
+            return redirect()
+                ->route('main.participants.edit', $item->id)
+                ->with(['success' => 'Запись успешно обновлена']);
         } else
         {
-            back()->withInput()->withErrors(['msg' => 'С изменением записи что-то пошло не так']);
+            back()
+                ->withInput()
+                ->withErrors(['msg' => 'С изменением записи что-то пошло не так']);
         }
 
         dd($result);
@@ -116,6 +124,7 @@ class ParticipantsController extends Controller
 
     private function getForLinks($data)
     {
+
         /** @var Collection $links */
         $links = collect($data['link']);
         $links->transform(function ($item, $index) use ($data)
@@ -125,20 +134,13 @@ class ParticipantsController extends Controller
                 return $newObj;
         });
 
-        $col = $links->filter()->all();
+        $col = $links->filter()
+            ->all();
         return $col;
     }
-    private function setDefaultValueForInputs(&$collection, $count)
+
+    private function setLinksValid()
     {
-        for($i = 0; $i < $count; $i++) {
-            if(!isset($collection[$i]))
-            {
-                $collection[$i] = [
-                    0 => null,
-                    1 => null
-                ];
-            }
-        }
-        $collection = collect($collection)->sortKeys()->toArray();
+
     }
 }
